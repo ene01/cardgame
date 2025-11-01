@@ -1,15 +1,17 @@
 const std = @import("std");
 const card = @import("card.zig");
 const cardmatrix = @import("cardmatrix.zig");
+const deck = @import("deck.zig");
 
 /// Initializes and returns a player's attributes with an empty hand and default rows.
 pub fn init(alloc: std.mem.Allocator) PAttributes {
-    return PAttributes{ .hand = std.ArrayList(card.CAttributes).init(alloc), .rows = cardmatrix.init(), .is_playing = true };
+    return PAttributes{ .hand = deck.init(alloc), .discard_deck = deck.init(alloc), .rows = cardmatrix.init(), .is_playing = true };
 }
 
 /// Player attributes: hand, rows, and status.
 pub const PAttributes = struct {
-    hand: std.ArrayList(card.CAttributes),
+    hand: deck.Cards,
+    discard_deck: deck.Cards,
     rows: cardmatrix.Matrix,
     is_playing: bool,
 
@@ -20,7 +22,7 @@ pub const PAttributes = struct {
 
     /// Adds a card to the player's hand.
     pub fn addToHand(self: *PAttributes, newCard: card.CAttributes) !void {
-        try self.hand.append(newCard);
+        try self.hand.addCard(newCard);
     }
 
     /// Adds a card to the specified row.
@@ -30,9 +32,9 @@ pub const PAttributes = struct {
 
     /// Removes a single instance of a card from the player's hand.
     pub fn removeFromHand(self: *PAttributes, cardToRemove: card.CAttributes) !void {
-        for (self.hand.items, 0..) |currentCard, index| {
+        for (self.hand.cards.items, 0..) |currentCard, index| {
             if (currentCard.rank == cardToRemove.rank and currentCard.suit == cardToRemove.suit) {
-                _ = self.hand.orderedRemove(index);
+                _ = self.hand.cards.orderedRemove(index);
                 break;
             }
         }
@@ -43,9 +45,9 @@ pub const PAttributes = struct {
         var found = true;
         while (found) {
             found = false;
-            for (self.hand.items, 0..) |currentCard, index| {
+            for (self.hand.cards.items, 0..) |currentCard, index| {
                 if (currentCard.rank == cardToRemove.rank and currentCard.suit == cardToRemove.suit) {
-                    _ = self.hand.orderedRemove(index);
+                    _ = self.hand.cards.orderedRemove(index);
                     found = true;
                     break;
                 }
