@@ -1,4 +1,4 @@
-/// Suits used for the cards
+/// Suits used for the cards.
 pub const Group = enum(u4) {
     Empty,
     Heart,
