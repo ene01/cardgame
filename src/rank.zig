@@ -1,6 +1,6 @@
 /// Ranks used for the cards.
 pub const Hierarchy = enum(u4) {
-    NoRank,
+    Empty,
     Joker,
     Two,
     Three,
