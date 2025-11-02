@@ -1,6 +1,7 @@
+const std = @import("std");
 /// Suits used for the cards
 pub const Group = enum(u4) {
-    NoSuit,
+    Empty,
     Heart,
     Spade,
     Club,
@@ -11,3 +12,10 @@ pub const Group = enum(u4) {
         return if (currentSuit == desiredSuit) true else false;
     }
 };
+
+test "equal suit pass" {
+    const suit_one = Group.Club;
+    const suit_two = Group.Club;
+
+    try std.testing.expect(Group.isSuitEqual(suit_one, suit_two));
+}
