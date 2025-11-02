@@ -1,64 +1,57 @@
 const card = @import("card.zig");
+const deck = @import("deck.zig");
 const std = @import("std");
 
-/// Maximum default number of cards in a game.
-const MAX_CARD_AMOUNT = 104;
-
-/// Maximum default number of rows.
-const MAX_ROWS = 4;
-
-/// Maximum default number of columns per row.
-const MAX_COLUMNS = 26;
-
-/// Initializes and returns a matrix with default dimensions and empty cards.
-pub fn init() Matrix {
-    return Matrix{
-        .matrix = [_]card.CAttributes{undefined} ** MAX_CARD_AMOUNT,
-        .rows = MAX_ROWS,
-        .columns = MAX_COLUMNS,
-        .row_last_index = [_]i8{-1} ** MAX_ROWS,
-    };
-}
-
 /// A matrix of cards arranged in rows and columns.
-pub const Matrix = struct {
-    matrix: [MAX_CARD_AMOUNT]card.CAttributes,
-    rows: u8,
-    columns: u8,
-    row_last_index: [MAX_ROWS]i8, // tracks last used index in each row
+pub const CardMatrix = struct {
+    matrix: std.ArrayList(deck.PlayingCards),
 
-    /// Resets teh matrix.
-    pub fn reset(self: *Matrix) void {
-        self.* = Matrix{
-            .matrix = [_]card.CAttributes{undefined} ** MAX_CARD_AMOUNT,
-            .rows = MAX_ROWS,
-            .columns = MAX_COLUMNS,
-            .row_last_index = [_]i8{-1} ** MAX_ROWS,
-        };
+    /// Initializes and returns a matrix of cards.
+    pub fn init(alloc: std.mem.Allocator, columns: usize) !CardMatrix {
+        var new_matrix = CardMatrix{ .matrix = std.ArrayList(deck.PlayingCards).init(alloc) };
+
+        // add a deck to each "column"
+        for (0..columns) |_| {
+            try new_matrix.matrix.append(deck.PlayingCards.init(alloc));
+        }
+
+        return new_matrix;
+    }
+
+    /// Releases all memory.
+    pub fn deinit(self: *CardMatrix) void {
+        self.matrix.deinit();
+    }
+
+    /// Returns the amount of card in a specified column.
+    pub fn columnSize(self: *CardMatrix, column: usize) usize {
+        return self.matrix.items[column].cards.items.len;
+    }
+
+    /// Resets the entire matrix.
+    pub fn reset(self: *CardMatrix) void {
+        for (self.matrix.items) |cardDeck| {
+            cardDeck.clear();
+        }
     }
 
     /// Adds a card to the specified row.
-    pub fn addCard(self: *Matrix, row: u8, newCard: card.CAttributes) !void {
-        self.row_last_index[row] += 1;
-        const idx: u8 = @intCast(self.row_last_index[row]);
-        self.matrix[row * self.columns + idx] = newCard;
+    pub fn addCard(self: *CardMatrix, column: u8, newCard: card.Identity) !void {
+        try self.matrix.items[column].addCard(newCard);
     }
 
     /// Removes the last card from the specified row.
-    pub fn removeCard(self: *Matrix, row: u8) !void {
-        if (self.row_last_index[row] >= 0) {
-            self.row_last_index[row] -= 1;
-        } else {
-            std.debug.print("[Matrix] Row {} is already empty\n", .{row});
-        }
+    pub fn removeCard(self: *CardMatrix, column: u8) ?card.Identity {
+        return self.matrix.items[column].removeCardByIndex(self.matrix.items[column].cards.items.len - 1);
     }
 
     /// Returns the card at the given row and column.
-    /// Prints a warning if the row is empty.
-    pub fn checkMatrix(self: *Matrix, row: u8, column: u8) !card.CAttributes {
-        if (self.row_last_index[row] < 0) {
-            std.debug.print("[Matrix] Row {} is empty; value may be uninitialized\n", .{row});
-        }
-        return self.matrix[row * self.columns + column];
+    pub fn lookUp(self: *CardMatrix, column: u8, row: u8) ?card.Identity {
+        return self.matrix.items[column].lookUpByIndex(row);
+    }
+
+    /// Clears a column.
+    pub fn clearColumn(self: *CardMatrix, column: usize) void {
+        self.matrix.items[column].clear();
     }
 };
