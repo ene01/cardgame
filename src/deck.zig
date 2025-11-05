@@ -1,42 +1,40 @@
 const std = @import("std");
 const card = @import("card.zig");
-const rank = @import("rank.zig");
-const suit = @import("suit.zig");
 
 /// A dynamic deck of cards.
-pub const PlayingCards = struct {
+pub const CardList = struct {
     cards: std.ArrayList(card.Identity),
 
-    /// Create an empty deck with the given allocator.
-    pub fn init(allocator: std.mem.Allocator) PlayingCards {
-        return PlayingCards{ .cards = std.ArrayList(card.Identity).init(allocator) };
+    /// Returns an empty deck with the given allocator.
+    pub fn init(allocator: std.mem.Allocator) CardList {
+        return CardList{ .cards = std.ArrayList(card.Identity).init(allocator) };
     }
 
     /// Releases memory used by the deck.
-    pub fn deinit(self: *PlayingCards) void {
+    pub fn deinit(self: *CardList) void {
         self.cards.deinit();
     }
 
     /// Clears all cards on the deck.
-    pub fn clear(self: *PlayingCards) void {
+    pub fn clear(self: *CardList) void {
         self.cards.clearRetainingCapacity();
     }
 
-    pub fn len(self: *PlayingCards) usize {
+    pub fn len(self: *CardList) usize {
         return self.cards.items.len;
     }
 
-    pub fn isEmpty(self: *PlayingCards) bool {
-        return self.cards.items.items.len == 0;
+    pub fn isEmpty(self: *CardList) bool {
+        return self.cards.items.len == 0;
     }
 
     /// Adds a card to the deck.
-    pub fn addCard(self: *PlayingCards, newCard: card.Identity) !void {
+    pub fn addCard(self: *CardList, newCard: card.Identity) !void {
         try self.cards.append(newCard);
     }
 
     /// Removes a single instance of the given card ID.
-    pub fn removeCardByID(self: *PlayingCards, cardToRemove: card.Identity) ?usize {
+    pub fn removeCardByID(self: *CardList, cardToRemove: card.Identity) ?usize {
         const index = self.lookUpByID(cardToRemove);
 
         if (index) |valid_index| {
@@ -47,7 +45,7 @@ pub const PlayingCards = struct {
     }
 
     /// Removes a single card instance from the given index
-    pub fn removeCardByIndex(self: *PlayingCards, index: usize) ?card.Identity {
+    pub fn removeCardByIndex(self: *CardList, index: usize) ?card.Identity {
         if (index < self.cards.items.len) {
             return self.cards.orderedRemove(index);
         }
@@ -55,7 +53,7 @@ pub const PlayingCards = struct {
     }
 
     /// Removes all instances of the given card from the deck.
-    pub fn removeMultipleCardsByID(self: *PlayingCards, cardToRemove: card.Identity) void {
+    pub fn removeMultipleCardsByID(self: *CardList, cardToRemove: card.Identity) void {
         var i: usize = 0;
         while (i < self.cards.items.len) {
             if (card.Identity.isCardEqual(self.cards.items[i], cardToRemove)) {
@@ -68,7 +66,7 @@ pub const PlayingCards = struct {
     }
 
     /// Returns the card at the specified index, if valid.
-    pub fn lookUpByIndex(self: *PlayingCards, index: usize) ?card.Identity {
+    pub fn lookUpByIndex(self: *CardList, index: usize) ?card.Identity {
         if (index < self.cards.items.len) {
             return self.cards.items[index];
         } else {
@@ -77,7 +75,7 @@ pub const PlayingCards = struct {
     }
 
     /// Returns the index of a given card identifier, returns null if nothing was found
-    pub fn lookUpByID(self: *PlayingCards, cardToSearch: card.Identity) ?usize {
+    pub fn lookUpByID(self: *CardList, cardToSearch: card.Identity) ?usize {
         for (self.cards.items, 0..) |currentCard, index| {
             if (card.Identity.isCardEqual(cardToSearch, currentCard)) {
                 return index;
@@ -86,7 +84,7 @@ pub const PlayingCards = struct {
         return null;
     }
 
-    pub fn cardExists(self: *PlayingCards, cardToCheck: card.Identity) bool {
+    pub fn cardExists(self: *CardList, cardToCheck: card.Identity) bool {
         for (self.cards.items) |currentCard| {
             if (card.Identity.isCardEqual(cardToCheck, currentCard)) {
                 return true;
@@ -95,7 +93,7 @@ pub const PlayingCards = struct {
         return false;
     }
 
-    pub fn countCardType(self: *PlayingCards, cardToCount: card.Identity) usize {
+    pub fn countCardType(self: *CardList, cardToCount: card.Identity) usize {
         var counter: usize = 0;
         for (self.cards.items) |currentCard| {
             if (card.Identity.isCardEqual(cardToCount, currentCard)) {
@@ -106,34 +104,304 @@ pub const PlayingCards = struct {
     }
 
     /// Returns a random card from the deck without reshuffling.
-    pub fn randomLookUp(self: *PlayingCards, seed: ?u64) ?card.Identity {
+    pub fn randomLookUp(self: *CardList, seed: ?u64) ?card.Identity {
         if (self.cards.items.len == 0) return null;
 
-        var rng = if (seed) |valid_Seed| {
-            std.Random.DefaultPrng.init(valid_Seed);
+        if (seed) |valid_Seed| {
+            var rng = std.Random.DefaultPrng.init(valid_Seed);
+            const number = rng.random().uintLessThan(usize, self.cards.items.len);
+
+            return self.cards.items[number];
         } else {
-            std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
-        };
-
-        return self.cards.items[rng.random().uintLessThan(usize, self.cards.items.len)];
-    }
-
-    // Shuffle deck and pick the first card.
-    pub fn shuffleLookUp(self: *PlayingCards, seed: ?u64) ?card.Identity {
-        if (self.cards.items.len == 0) return null;
-
-        self.shuffle(seed);
-        return self.cards.items[0];
+            var rng = std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+            return self.cards.items[rng.random().uintLessThan(usize, self.cards.items.len)];
+        }
     }
 
     /// Shuffles the deck. Pass `null` for a random seed.
-    pub fn shuffle(self: *PlayingCards, seed: ?u64) void {
-        var rng = if (seed) |valid_seed| {
-            std.Random.DefaultPrng.init(valid_seed);
+    pub fn shuffle(self: *CardList, seed: ?u64) void {
+        if (seed) |valid_seed| {
+            var rng = std.Random.DefaultPrng.init(valid_seed);
+            rng.random().shuffle(card.Identity, self.cards.items);
         } else {
-            std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
-        };
-
-        rng.random().shuffle(card.Identity, self.cards.items);
+            var rng = std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+            rng.random().shuffle(card.Identity, self.cards.items);
+        }
     }
 };
+
+test "deck initiation" {
+    const alloc = std.testing.allocator;
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try std.testing.expect(deck.cards.items.len == 0);
+}
+
+test "clear deck" {
+    const alloc = std.testing.allocator;
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    // Forcefully add a card.
+    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    deck.clear();
+
+    try std.testing.expect(deck.len() == 0);
+}
+
+test "deck lenght" {
+    const alloc = std.testing.allocator;
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    // Forcefully add cards.
+    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+
+    try std.testing.expect(deck.len() == 3);
+}
+
+test "is deck empty" {
+    const alloc = std.testing.allocator;
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try std.testing.expect(deck.isEmpty());
+}
+
+test "add card" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.addCard(card_one);
+
+    // one card, and the card there is the one we expect.
+    try std.testing.expect(deck.cards.items.len == 1 and deck.cards.items[0].rank == card.Rank.Ace and deck.cards.items[0].suit == card.Suit.Spade);
+}
+
+test "remove by id" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+
+    _ = deck.removeCardByID(card_one);
+
+    try std.testing.expect(deck.cards.items.len == 0);
+}
+
+test "remove by index" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+
+    const removed_card = deck.removeCardByIndex(0).?;
+
+    // one card, and the card there is the one we expect.
+    try std.testing.expect(deck.cards.items.len == 0 and removed_card.rank == card_one.rank and removed_card.suit == card_one.suit);
+}
+
+test "remove multiple by id" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    // 6 cards, one is different.
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_one);
+
+    deck.removeMultipleCardsByID(card_one);
+
+    try std.testing.expect(deck.cards.items.len == 1 and deck.cards.items[0].rank == card.Rank.Ace and deck.cards.items[0].suit == card.Suit.Spade);
+}
+
+test "look up by index" {
+    const alloc = std.testing.allocator;
+
+    // fallback card, in case the test fails.
+    const card_empty = card.Identity{ .rank = card.Rank.Empty, .suit = card.Suit.Empty };
+
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Two, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Queen, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.King, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
+    const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    var picked_card: card.Identity = undefined;
+
+    if (deck.lookUpByIndex(3)) |valid_card| {
+        picked_card = valid_card;
+    } else {
+        picked_card = card_empty;
+    }
+
+    try std.testing.expect(deck.cards.items[3].rank == picked_card.rank and deck.cards.items[3].suit == picked_card.suit);
+}
+
+test "look up by id" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Two, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Queen, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.King, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
+    const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    var picked_card_index: usize = undefined;
+
+    if (deck.lookUpByID(card_four)) |valid_index| {
+        picked_card_index = valid_index;
+    } else {
+        picked_card_index = 0;
+    }
+
+    try std.testing.expect(deck.cards.items[picked_card_index].rank == card_four.rank and deck.cards.items[picked_card_index].suit == card_four.suit);
+}
+
+test "card exist" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Two, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Queen, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.King, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
+    const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    try std.testing.expect(deck.cardExists(card_five));
+}
+
+test "count card type" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_seven = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    try std.testing.expect(deck.countCardType(card_five) == 3);
+}
+
+test "random look up" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Two, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Queen, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.King, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
+    const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    const picked_card = deck.randomLookUp(12345).?;
+
+    try std.testing.expect(picked_card.rank == card_four.rank and picked_card.suit == card_four.suit);
+}
+
+test "shuffle" {
+    const alloc = std.testing.allocator;
+    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_three = card.Identity{ .rank = card.Rank.Two, .suit = card.Suit.Club };
+    const card_four = card.Identity{ .rank = card.Rank.Queen, .suit = card.Suit.Diamond };
+    const card_five = card.Identity{ .rank = card.Rank.King, .suit = card.Suit.Heart };
+    const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
+    const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
+
+    var deck = CardList.init(alloc);
+    defer deck.deinit();
+
+    try deck.cards.append(card_one);
+    try deck.cards.append(card_two);
+    try deck.cards.append(card_three);
+    try deck.cards.append(card_four);
+    try deck.cards.append(card_five);
+    try deck.cards.append(card_six);
+    try deck.cards.append(card_seven);
+
+    deck.shuffle(12345);
+
+    try std.testing.expect(deck.cards.items[0].rank == card_four.rank and deck.cards.items[0].suit == card_four.suit);
+}
