@@ -4,9 +4,9 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    _ = b.addModule("cardgame", .{
+    b.modules.put("cardgame", b.addModule("cardgame", .{
         .root_source_file = b.path("src/root.zig"),
-    });
+    })) catch unreachable;
 
     const static_lib = b.addStaticLibrary(.{
         .name = "cardgame",
