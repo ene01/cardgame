@@ -4,15 +4,19 @@ const card = @import("card.zig");
 /// A dynamic deck of cards.
 pub const CardList = struct {
     cards: std.ArrayList(card.Identity),
+    allocator: std.mem.Allocator,
 
     /// Returns an empty deck with the given allocator.
-    pub fn init(allocator: std.mem.Allocator) CardList {
-        return CardList{ .cards = std.ArrayList(card.Identity).init(allocator) };
+    pub fn init(gpa: std.mem.Allocator, amountOfCards: usize) !CardList {
+        var card_list: CardList = undefined;
+        card_list = CardList{ .cards = try std.ArrayList(card.Identity).initCapacity(gpa, amountOfCards), .allocator = gpa };
+
+        return card_list;
     }
 
     /// Releases memory used by the deck.
     pub fn deinit(self: *CardList) void {
-        self.cards.deinit();
+        self.cards.deinit(self.allocator);
     }
 
     /// Clears all cards on the deck.
@@ -30,7 +34,7 @@ pub const CardList = struct {
 
     /// Adds a card to the deck.
     pub fn addCard(self: *CardList, newCard: card.Identity) !void {
-        try self.cards.append(newCard);
+        try self.cards.append(self.allocator, newCard);
     }
 
     /// Removes a single instance of the given card ID.
@@ -133,7 +137,7 @@ pub const CardList = struct {
 test "deck initiation" {
     const alloc = std.testing.allocator;
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
     try std.testing.expect(deck.cards.items.len == 0);
@@ -142,26 +146,26 @@ test "deck initiation" {
 test "clear deck" {
     const alloc = std.testing.allocator;
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
     // Forcefully add a card.
-    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(deck.allocator, card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
     deck.clear();
 
     try std.testing.expect(deck.len() == 0);
 }
 
-test "deck lenght" {
+test "deck length" {
     const alloc = std.testing.allocator;
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
     // Forcefully add cards.
-    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
-    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
-    try deck.cards.append(card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(deck.allocator, card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(deck.allocator, card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
+    try deck.cards.append(deck.allocator, card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club });
 
     try std.testing.expect(deck.len() == 3);
 }
@@ -169,7 +173,7 @@ test "deck lenght" {
 test "is deck empty" {
     const alloc = std.testing.allocator;
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
     try std.testing.expect(deck.isEmpty());
@@ -179,12 +183,11 @@ test "add card" {
     const alloc = std.testing.allocator;
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
     try deck.addCard(card_one);
 
-    // one card, and the card there is the one we expect.
     try std.testing.expect(deck.cards.items.len == 1 and deck.cards.items[0].rank == card.Rank.Ace and deck.cards.items[0].suit == card.Suit.Spade);
 }
 
@@ -192,10 +195,10 @@ test "remove by id" {
     const alloc = std.testing.allocator;
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
+    try deck.cards.append(deck.allocator, card_one);
 
     _ = deck.removeCardByID(card_one);
 
@@ -206,14 +209,13 @@ test "remove by index" {
     const alloc = std.testing.allocator;
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
+    try deck.cards.append(deck.allocator, card_one);
 
     const removed_card = deck.removeCardByIndex(0).?;
 
-    // one card, and the card there is the one we expect.
     try std.testing.expect(deck.cards.items.len == 0 and removed_card.rank == card_one.rank and removed_card.suit == card_one.suit);
 }
 
@@ -222,26 +224,23 @@ test "remove multiple by id" {
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
     const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    // 6 cards, one is different.
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_one);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_one);
 
     deck.removeMultipleCardsByID(card_one);
 
-    try std.testing.expect(deck.cards.items.len == 1 and deck.cards.items[0].rank == card.Rank.Ace and deck.cards.items[0].suit == card.Suit.Spade);
+    try std.testing.expect(deck.cards.items.len == 1 and deck.cards.items[0].rank == card_two.rank and deck.cards.items[0].suit == card_two.suit);
 }
 
 test "look up by index" {
     const alloc = std.testing.allocator;
-
-    // fallback card, in case the test fails.
     const card_empty = card.Identity{ .rank = card.Rank.Empty, .suit = card.Suit.Empty };
 
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
@@ -252,16 +251,16 @@ test "look up by index" {
     const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
     const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     var picked_card: card.Identity = undefined;
 
@@ -284,16 +283,16 @@ test "look up by id" {
     const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
     const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     var picked_card_index: usize = undefined;
 
@@ -316,16 +315,16 @@ test "card exist" {
     const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
     const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     try std.testing.expect(deck.cardExists(card_five));
 }
@@ -340,16 +339,16 @@ test "count card type" {
     const card_six = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
     const card_seven = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     try std.testing.expect(deck.countCardType(card_five) == 3);
 }
@@ -364,16 +363,16 @@ test "random look up" {
     const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
     const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     const picked_card = deck.randomLookUp(12345).?;
 
@@ -390,16 +389,16 @@ test "shuffle" {
     const card_six = card.Identity{ .rank = card.Rank.Ten, .suit = card.Suit.Spade };
     const card_seven = card.Identity{ .rank = card.Rank.Five, .suit = card.Suit.Club };
 
-    var deck = CardList.init(alloc);
+    var deck = try CardList.init(alloc, 10);
     defer deck.deinit();
 
-    try deck.cards.append(card_one);
-    try deck.cards.append(card_two);
-    try deck.cards.append(card_three);
-    try deck.cards.append(card_four);
-    try deck.cards.append(card_five);
-    try deck.cards.append(card_six);
-    try deck.cards.append(card_seven);
+    try deck.cards.append(deck.allocator, card_one);
+    try deck.cards.append(deck.allocator, card_two);
+    try deck.cards.append(deck.allocator, card_three);
+    try deck.cards.append(deck.allocator, card_four);
+    try deck.cards.append(deck.allocator, card_five);
+    try deck.cards.append(deck.allocator, card_six);
+    try deck.cards.append(deck.allocator, card_seven);
 
     deck.shuffle(12345);
 
