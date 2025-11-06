@@ -9,8 +9,8 @@ pub const Cardgame = struct {
     player: player,
 
     /// Initiation of Cardgame.
-    pub fn init(alloc: std.mem.Allocator, defaultColumnAmount: usize) !Cardgame {
-        return Cardgame{ .deck = deck.CardList.init(alloc), .player = try player.init(alloc, defaultColumnAmount) };
+    pub fn init(gpa: std.mem.Allocator, defaultColumnAmount: usize) !Cardgame {
+        return Cardgame{ .deck = deck.CardList.init(gpa), .player = try player.init(gpa, defaultColumnAmount, 5, 10) };
     }
 
     pub fn giveCardsToPlayer(self: *Cardgame) !void {
@@ -18,7 +18,7 @@ pub const Cardgame = struct {
             const picked_card = self.deck.randomLookUp();
 
             if (picked_card) |valid_card| {
-                try self.player.addToHand(valid_card);
+                // try self.player.addToHand(valid_card);
                 _ = self.deck.removeCardByID(valid_card);
             } else {
                 return;
