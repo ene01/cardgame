@@ -11,14 +11,15 @@ pub const Attributes = struct {
     is_playing: bool,
 
     /// Initializes and returns a player's attributes with an empty hand.
-    pub fn init(alloc: std.mem.Allocator, columnAmount: usize) !Attributes {
-        return Attributes{ .hand = deck.CardList.init(alloc), .discard_deck = deck.CardList.init(alloc), .tableau = try cardmatrix.CardMatrix.init(alloc, columnAmount), .is_playing = true };
+    pub fn init(gpa: std.mem.Allocator, columnAmount: usize, handSize: usize, discardAmount: usize, cardsPerColumn: usize) !Attributes {
+        return Attributes{ .hand = try deck.CardList.init(gpa, handSize), .discard_deck = try deck.CardList.init(gpa, discardAmount), .tableau = try cardmatrix.CardMatrix.init(gpa, columnAmount, cardsPerColumn), .is_playing = true };
     }
 
     /// Releases memory for dynamic arrays (hand).
     pub fn deinit(self: *Attributes) void {
         self.hand.deinit();
         self.tableau.deinit();
+        self.discard_deck.deinit();
     }
 
     /// Adds a card to the player's hand.
@@ -50,7 +51,7 @@ pub const Attributes = struct {
 test "player initiation" {
     const alloc = std.testing.allocator;
 
-    const player_one = try Attributes.init(alloc, 4);
+    var player_one = try Attributes.init(alloc, 4, 5, 10, 52);
     defer player_one.deinit();
 
     try std.testing.expectEqual(player_one.tableau.matrix.items.len, 4);
