@@ -5,14 +5,17 @@ const std = @import("std");
 /// A matrix of cards arranged in rows and columns.
 pub const CardMatrix = struct {
     matrix: std.ArrayList(deck.CardList),
+    allocator: std.mem.Allocator,
 
     /// Initializes and returns a matrix of cards.
-    pub fn init(alloc: std.mem.Allocator, columns: usize) !CardMatrix {
-        var new_matrix = CardMatrix{ .matrix = std.ArrayList(deck.CardList).init(alloc) };
+    pub fn init(gpa: std.mem.Allocator, columns: usize, cardsPerDeck: usize) !CardMatrix {
+        var new_matrix = CardMatrix{ .matrix = try std.ArrayList(deck.CardList).initCapacity(gpa, 20), .allocator = gpa };
+        var new_deck: deck.CardList = undefined;
 
         // add a deck to each "column"
         for (0..columns) |_| {
-            try new_matrix.matrix.append(deck.CardList.init(alloc));
+            new_deck = try deck.CardList.init(gpa, cardsPerDeck);
+            try new_matrix.matrix.append(gpa, new_deck);
         }
 
         return new_matrix;
@@ -20,7 +23,11 @@ pub const CardMatrix = struct {
 
     /// Releases all memory.
     pub fn deinit(self: *CardMatrix) void {
-        self.matrix.deinit();
+        for (self.matrix.items) |*currentDeck| {
+            currentDeck.deinit();
+        }
+
+        self.matrix.deinit(self.allocator);
     }
 
     /// Returns the amount of card in a specified column.
