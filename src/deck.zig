@@ -7,7 +7,7 @@ pub const CardList = struct {
     allocator: std.mem.Allocator,
 
     /// Returns an empty deck with the given allocator.
-    pub fn init(gpa: std.mem.Allocator, card_amount: usize) !CardList {
+    pub fn init(gpa: std.mem.Allocator, card_amount: u16) !CardList {
         var card_list: CardList = undefined;
         card_list = CardList{ .cards = try std.ArrayList(card.Identity).initCapacity(gpa, card_amount), .allocator = gpa };
 
