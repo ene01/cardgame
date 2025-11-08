@@ -9,8 +9,8 @@ pub const Suit = enum(u4) {
     Diamond,
 
     /// Checks if the suits are equal.
-    pub fn isSuitTypeEqual(currentSuit: Suit, desiredSuit: Suit) bool {
-        return if (currentSuit == desiredSuit) true else false;
+    pub fn isSuitEqual(current_suit: Suit, desired_suit: Suit) bool {
+        return if (current_suit == desired_suit) true else false;
     }
 };
 
@@ -33,8 +33,8 @@ pub const Rank = enum(u4) {
     Ace,
 
     /// Checks if the ranks are equal.
-    pub fn isRankEqual(currentRank: Rank, desiredRank: Rank) bool {
-        return if (currentRank == desiredRank) true else false;
+    pub fn isRankEqual(current_rank: Rank, desired_rank: Rank) bool {
+        return if (current_rank == desired_rank) true else false;
     }
 };
 
@@ -43,8 +43,8 @@ pub const Identity = struct {
     rank: Rank,
     suit: Suit,
 
-    pub fn isCardEqual(cardOne: Identity, cardTwo: Identity) bool {
-        return if (cardOne.rank == cardTwo.rank and cardOne.suit == cardTwo.suit) true else false;
+    pub fn isCardEqual(card_one: Identity, card_two: Identity) bool {
+        return if (card_one.rank == card_two.rank and card_one.suit == card_two.suit) true else false;
     }
 
     /// Sets the card's rank.
@@ -76,14 +76,14 @@ test "equal suit true" {
     const suit_one = Suit.Club;
     const suit_two = Suit.Club;
 
-    try std.testing.expect(Suit.isSuitTypeEqual(suit_one, suit_two));
+    try std.testing.expect(Suit.isSuitEqual(suit_one, suit_two));
 }
 
 test "equal suit false" {
     const suit_one = Suit.Club;
     const suit_two = Suit.Spade;
 
-    try std.testing.expect(!Suit.isSuitTypeEqual(suit_one, suit_two));
+    try std.testing.expect(!Suit.isSuitEqual(suit_one, suit_two));
 }
 
 test "equal card true" {
