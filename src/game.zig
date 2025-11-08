@@ -9,8 +9,8 @@ pub const Cardgame = struct {
     player: player,
 
     /// Initiation of Cardgame.
-    pub fn init(gpa: std.mem.Allocator, defaultColumnAmount: usize) !Cardgame {
-        return Cardgame{ .deck = deck.CardList.init(gpa), .player = try player.init(gpa, defaultColumnAmount, 5, 10) };
+    pub fn init(gpa: std.mem.Allocator, default_columns: usize) !Cardgame {
+        return Cardgame{ .deck = deck.CardList.init(gpa), .player = try player.init(gpa, default_columns, 5, 10) };
     }
 
     pub fn giveCardsToPlayer(self: *Cardgame) !void {
