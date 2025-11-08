@@ -7,9 +7,9 @@ pub const CardList = struct {
     allocator: std.mem.Allocator,
 
     /// Returns an empty deck with the given allocator.
-    pub fn init(gpa: std.mem.Allocator, amountOfCards: usize) !CardList {
+    pub fn init(gpa: std.mem.Allocator, card_amount: usize) !CardList {
         var card_list: CardList = undefined;
-        card_list = CardList{ .cards = try std.ArrayList(card.Identity).initCapacity(gpa, amountOfCards), .allocator = gpa };
+        card_list = CardList{ .cards = try std.ArrayList(card.Identity).initCapacity(gpa, card_amount), .allocator = gpa };
 
         return card_list;
     }
@@ -33,13 +33,13 @@ pub const CardList = struct {
     }
 
     /// Adds a card to the deck.
-    pub fn addCard(self: *CardList, newCard: card.Identity) !void {
-        try self.cards.append(self.allocator, newCard);
+    pub fn addCard(self: *CardList, new_card: card.Identity) !void {
+        try self.cards.append(self.allocator, new_card);
     }
 
     /// Removes a single instance of the given card ID.
-    pub fn removeCardByID(self: *CardList, cardToRemove: card.Identity) ?usize {
-        const index = self.lookUpByID(cardToRemove);
+    pub fn removeCardByID(self: *CardList, card_to_Remove: card.Identity) ?usize {
+        const index = self.lookUpByID(card_to_Remove);
 
         if (index) |valid_index| {
             _ = self.cards.orderedRemove(valid_index);
@@ -57,10 +57,10 @@ pub const CardList = struct {
     }
 
     /// Removes all instances of the given card from the deck.
-    pub fn removeMultipleCardsByID(self: *CardList, cardToRemove: card.Identity) void {
+    pub fn removeMultipleCardsByID(self: *CardList, card_to_remove: card.Identity) void {
         var i: usize = 0;
         while (i < self.cards.items.len) {
-            if (card.Identity.isCardEqual(self.cards.items[i], cardToRemove)) {
+            if (card.Identity.isCardEqual(self.cards.items[i], card_to_remove)) {
                 _ = self.cards.orderedRemove(i);
                 // if a card is removed, the next card shifts into the next index, so no need to increment.
             } else {
@@ -79,28 +79,28 @@ pub const CardList = struct {
     }
 
     /// Returns the index of a given card identifier, returns null if nothing was found
-    pub fn lookUpByID(self: *CardList, cardToSearch: card.Identity) ?usize {
+    pub fn lookUpByID(self: *CardList, card_to_search: card.Identity) ?usize {
         for (self.cards.items, 0..) |currentCard, index| {
-            if (card.Identity.isCardEqual(cardToSearch, currentCard)) {
+            if (card.Identity.isCardEqual(card_to_search, currentCard)) {
                 return index;
             }
         }
         return null;
     }
 
-    pub fn cardExists(self: *CardList, cardToCheck: card.Identity) bool {
+    pub fn cardExists(self: *CardList, card_to_check: card.Identity) bool {
         for (self.cards.items) |currentCard| {
-            if (card.Identity.isCardEqual(cardToCheck, currentCard)) {
+            if (card.Identity.isCardEqual(card_to_check, currentCard)) {
                 return true;
             }
         }
         return false;
     }
 
-    pub fn countCardType(self: *CardList, cardToCount: card.Identity) usize {
+    pub fn countCardType(self: *CardList, card_to_count: card.Identity) usize {
         var counter: usize = 0;
         for (self.cards.items) |currentCard| {
-            if (card.Identity.isCardEqual(cardToCount, currentCard)) {
+            if (card.Identity.isCardEqual(card_to_count, currentCard)) {
                 counter += 1;
             }
         }
