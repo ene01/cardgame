@@ -8,7 +8,7 @@ pub const CardMatrix = struct {
     allocator: std.mem.Allocator,
 
     /// Initializes and returns a matrix of cards.
-    pub fn init(gpa: std.mem.Allocator, columns: usize, rows: usize) !CardMatrix {
+    pub fn init(gpa: std.mem.Allocator, columns: u16, rows: u16) !CardMatrix {
         var new_matrix = CardMatrix{ .matrix = try std.ArrayList(deck.CardList).initCapacity(gpa, 20), .allocator = gpa };
         var new_deck: deck.CardList = undefined;
 
@@ -43,17 +43,17 @@ pub const CardMatrix = struct {
     }
 
     /// Adds a card to the specified row.
-    pub fn addCard(self: *CardMatrix, column_index: u8, newCard: card.Identity) !void {
+    pub fn addCard(self: *CardMatrix, column_index: usize, newCard: card.Identity) !void {
         try self.matrix.items[column_index].addCard(newCard);
     }
 
     /// Removes the last card from the specified row.
-    pub fn removeCard(self: *CardMatrix, column_index: u8) ?card.Identity {
+    pub fn removeCard(self: *CardMatrix, column_index: usize) ?card.Identity {
         return self.matrix.items[column_index].removeCardByIndex(self.matrix.items[column_index].cards.items.len - 1);
     }
 
     /// Returns the card at the given row and column.
-    pub fn lookUp(self: *CardMatrix, column_index: u8, rowIndex: u8) ?card.Identity {
+    pub fn lookUp(self: *CardMatrix, column_index: usize, rowIndex: usize) ?card.Identity {
         return self.matrix.items[column_index].lookUpByIndex(rowIndex);
     }
 
