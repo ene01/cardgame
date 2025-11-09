@@ -1,12 +1,14 @@
+//! The card definitnion.
 const std = @import("std");
 
 /// Suits used for the cards.
 pub const Suit = enum(u4) {
     Empty,
-    Heart,
-    Spade,
+    All,
     Club,
     Diamond,
+    Heart,
+    Spade,
 
     /// Checks if the suits are equal.
     pub fn isSuitEqual(current_suit: Suit, desired_suit: Suit) bool {
@@ -18,19 +20,19 @@ pub const Suit = enum(u4) {
 pub const Rank = enum(u4) {
     Empty,
     Joker,
-    Two,
-    Three,
-    Four,
-    Five,
-    Six,
-    Seven,
-    Eight,
-    Nine,
-    Ten,
-    Jack,
-    Queen,
-    King,
     Ace,
+    King,
+    Queen,
+    Jack,
+    Ten,
+    Nine,
+    Eight,
+    Seven,
+    Six,
+    Five,
+    Four,
+    Three,
+    Two,
 
     /// Checks if the ranks are equal.
     pub fn isRankEqual(current_rank: Rank, desired_rank: Rank) bool {
