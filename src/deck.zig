@@ -1,3 +1,4 @@
+//! The deck definition.
 const std = @import("std");
 const card = @import("card.zig");
 
@@ -7,8 +8,9 @@ pub const CardList = struct {
     allocator: std.mem.Allocator,
 
     /// Returns an empty deck with the given allocator.
-    pub fn init(gpa: std.mem.Allocator, card_amount: u16) !CardList {
+    pub fn init(gpa: std.mem.Allocator, card_amount: usize) !CardList {
         var card_list: CardList = undefined;
+
         card_list = CardList{ .cards = try std.ArrayList(card.Identity).initCapacity(gpa, card_amount), .allocator = gpa };
 
         return card_list;
