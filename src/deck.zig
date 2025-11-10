@@ -4,7 +4,9 @@ const card = @import("card.zig");
 
 /// A dynamic deck of cards.
 pub const CardList = struct {
+    /// An ArrayList of cards, you can handle this manually for more control over the deck.
     cards: std.ArrayList(card.Identity),
+    /// The allocator used by this struct.
     allocator: std.mem.Allocator,
 
     /// Returns an empty deck with the given allocator.
