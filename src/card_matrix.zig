@@ -1,10 +1,13 @@
+//! Provides a struct for a card matrix.
 const card = @import("card.zig");
 const deck = @import("deck.zig");
 const std = @import("std");
 
 /// A matrix of cards arranged in rows and columns.
 pub const CardMatrix = struct {
+    /// An ArrayList of CardList, you can handle this manually for more control over the decks that form the matrix.
     matrix: std.ArrayList(deck.CardList),
+    /// The allocator used by this struct.
     allocator: std.mem.Allocator,
 
     /// Initializes and returns a matrix of cards.
