@@ -3,7 +3,6 @@ const deck = @import("deck.zig");
 const card = @import("card.zig");
 pub const player = @import("player.zig").Attributes;
 
-// TODO: Needs the game implementation itself...
 pub const Cardgame = struct {
     deck: deck.CardList,
     player: player,
