@@ -7,7 +7,7 @@ const std = @import("std");
 pub fn appendStandardDeck(d: *deck.CardList, times: usize, jokers: bool) !void {
     for (0..times) |_| {
         for (2..(@intFromEnum(card.Suit.Diamond)) + 1) |suitInt| { // Begin from Club to Spades
-            for (2..(@intFromEnum(card.Rank.Two)) + 1) |rankInt| { // From Ace to
+            for (3..(@intFromEnum(card.Rank.Two)) + 1) |rankInt| { // From Ace to
                 try d.addCard(card.Identity{ .rank = @enumFromInt(rankInt), .suit = @enumFromInt(suitInt) });
             }
         }
@@ -77,8 +77,8 @@ pub fn orderDeckBySuit(d: *deck.CardList) !void {
 
     var counter: u16 = 0;
 
-    for (0..(@intFromEnum(card.Suit.Diamond)) + 1) |suit_int| {
-        for (0..(@intFromEnum(card.Rank.Two)) + 1) |rank_int| {
+    for (1..(@intFromEnum(card.Suit.Diamond)) + 1) |suit_int| {
+        for (1..(@intFromEnum(card.Rank.Two)) + 1) |rank_int| {
             const current_card = card.Identity{ .rank = @enumFromInt(rank_int), .suit = @enumFromInt(suit_int) };
 
             if (d.cardExists(current_card)) {
@@ -105,8 +105,8 @@ pub fn orderDeckByRankDescending(d: *deck.CardList) !void {
 
     var counter: u16 = 0;
 
-    for (0..(@intFromEnum(card.Rank.Two)) + 1) |rankInt| {
-        for (0..(@intFromEnum(card.Suit.Diamond)) + 1) |suitInt| {
+    for (1..(@intFromEnum(card.Rank.Two)) + 1) |rankInt| {
+        for (1..(@intFromEnum(card.Suit.Diamond)) + 1) |suitInt| {
             const current_card = card.Identity{ .rank = @enumFromInt(rankInt), .suit = @enumFromInt(suitInt) };
 
             if (d.cardExists(current_card)) {
@@ -133,9 +133,9 @@ pub fn orderDeckByRankAscending(d: *deck.CardList) !void {
 
     var counter: u16 = 0;
 
-    var rank_int: u4 = @intFromEnum(card.Rank.Two);
+    var rank_int: u8 = @intFromEnum(card.Rank.Two);
     while (rank_int + 1 > 1) : (rank_int -= 1) {
-        for (0..(@intFromEnum(card.Suit.Diamond)) + 1) |suit_int| {
+        for (1..(@intFromEnum(card.Suit.Diamond)) + 1) |suit_int| {
             const current_card = card.Identity{ .rank = @enumFromInt(rank_int), .suit = @enumFromInt(suit_int) };
 
             if (d.cardExists(current_card)) {
@@ -185,7 +185,7 @@ test "add standard deck" {
 
     try std.testing.expect(!test_deck.cardExists(card.Identity{
         .rank = card.Rank.Joker,
-        .suit = card.Suit.Empty,
+        .suit = card.Suit.All,
     }));
 
     test_deck.clear();
