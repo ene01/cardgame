@@ -2,9 +2,9 @@
 const std = @import("std");
 
 /// Suits used for the cards.
-pub const Suit = enum(u4) {
+pub const Suit = enum(u8) {
     /// Mainly intended as a placeholder for "error cards".
-    Empty,
+    Invalid,
     All,
     Spade,
     Heart,
@@ -18,9 +18,10 @@ pub const Suit = enum(u4) {
 };
 
 /// Ranks used for the cards.
-pub const Rank = enum(u4) {
+pub const Rank = enum(u8) {
     /// Mainly intended as a placeholder for "error cards".
-    Empty,
+    Invalid,
+    All,
     Joker,
     Ace,
     King,
