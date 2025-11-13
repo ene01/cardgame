@@ -245,7 +245,7 @@ test "remove multiple by id" {
 
 test "look up by index" {
     const alloc = std.testing.allocator;
-    const card_empty = card.Identity{ .rank = card.Rank.Empty, .suit = card.Suit.Empty };
+    const card_invalid = card.Identity{ .rank = card.Rank.Invalid, .suit = card.Suit.Invalid };
 
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
     const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
@@ -271,7 +271,7 @@ test "look up by index" {
     if (deck.lookUpByIndex(3)) |valid_card| {
         picked_card = valid_card;
     } else {
-        picked_card = card_empty;
+        picked_card = card_invalid;
     }
 
     try std.testing.expect(deck.cards.items[3].rank == picked_card.rank and deck.cards.items[3].suit == picked_card.suit);
