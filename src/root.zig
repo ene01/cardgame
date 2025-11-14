@@ -1,5 +1,9 @@
-pub const game = @import("game.zig");
-pub const player = @import("player.zig");
 pub const cardmatrix = @import("card_matrix.zig");
-pub const deck = @import("deck.zig");
+pub const card_utlils = @import("card_utils.zig");
 pub const card = @import("card.zig");
+pub const cardgame = @import("cardgame.zig");
+pub const deck_utils = @import("deck_utils.zig");
+pub const deck = @import("deck.zig");
+pub const player = @import("player.zig");
+pub const game_logic = @import("game_logic.zig");
+pub const log = @import("log.zig");
