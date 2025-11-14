@@ -3,7 +3,7 @@ const std = @import("std");
 
 /// Suits used for the cards.
 pub const Suit = enum(u8) {
-    /// Mainly intended as a placeholder for "error cards".
+    /// Mainly intended as a placeholder for error cards.
     Invalid,
     All,
     Spade,
@@ -19,7 +19,7 @@ pub const Suit = enum(u8) {
 
 /// Ranks used for the cards.
 pub const Rank = enum(u8) {
-    /// Mainly intended as a placeholder for "error cards".
+    /// Mainly intended as a placeholder for error cards.
     Invalid,
     All,
     Joker,
@@ -41,9 +41,29 @@ pub const Rank = enum(u8) {
     pub fn isRankEqual(current_rank: Rank, desired_rank: Rank) bool {
         return if (current_rank == desired_rank) true else false;
     }
+
+    /// Checks if the `Rank` given is higher than another `Rank`.
+    pub fn isRankHigherThan(higher: Rank, lower: Rank) bool {
+        return if (@intFromEnum(higher) < @intFromEnum(lower)) true else false;
+    }
+
+    /// Checks if the `Rank` given is lower than another `Rank`.
+    pub fn isRankLowerThan(lower: Rank, higher: Rank) bool {
+        return if (@intFromEnum(lower) > @intFromEnum(higher)) true else false;
+    }
+
+    /// Checks if a `Rank` is one higher than another `Rank`.
+    pub fn isRankOneHigher(candidate: Rank, current: Rank) bool {
+        return if (@intFromEnum(candidate) == @intFromEnum(current) - 1) true else false;
+    }
+
+    /// Checks if a `Rank` is one lower than another `Rank`.
+    pub fn isRankOneLower(candidate: Rank, current: Rank) bool {
+        return if (@intFromEnum(candidate) == @intFromEnum(current) + 1) true else false;
+    }
 };
 
-/// Card indentity attributes for Rank and Suit.
+/// Card identity attributes, defines `Rank` and `Suit` for a card.
 pub const Identity = struct {
     rank: Rank,
     suit: Suit,
@@ -75,6 +95,34 @@ test "equal rank false" {
     const rank_two = Rank.King;
 
     try std.testing.expect(!Rank.isRankEqual(rank_one, rank_two));
+}
+
+test "rank higher than" {
+    const rank_one = Rank.Ace;
+    const rank_two = Rank.Two;
+
+    try std.testing.expect(Rank.isRankHigherThan(rank_one, rank_two));
+}
+
+test "rank lower than" {
+    const rank_one = Rank.Ace;
+    const rank_two = Rank.Two;
+
+    try std.testing.expect(Rank.isRankLowerThan(rank_two, rank_one));
+}
+
+test "rank one higher than" {
+    const rank_one = Rank.Ace;
+    const rank_two = Rank.King;
+
+    try std.testing.expect(Rank.isRankOneHigher(rank_one, rank_two));
+}
+
+test "rank one lower than" {
+    const rank_one = Rank.Ace;
+    const rank_two = Rank.King;
+
+    try std.testing.expect(Rank.isRankOneLower(rank_two, rank_one));
 }
 
 test "equal suit true" {
