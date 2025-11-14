@@ -2,6 +2,12 @@
     .name = .cardgame,
 
     .version = "0.0.0",
+    .dependencies = .{
+        .zeit = .{
+            .url = "git+https://github.com/rockorager/zeit#74be5a2afb346b2a6a6349abbb609e89ec7e65a6",
+            .hash = "zeit-0.6.0-5I6bk4t8AgCP0UGGHVF_khlmWZkAF5XtfQWEKCyLoptU",
+        },
+    },
 
     .fingerprint = 0x3eb0acb7dec5ac94,
 
