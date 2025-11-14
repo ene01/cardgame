@@ -9,6 +9,14 @@ pub fn isFaceCard(c: card.Identity) bool {
     };
 }
 
+/// Checks if the card counts as a face card or an Ace.
+pub fn isAceOrFaceCard(c: card.Identity) bool {
+    return switch (c.rank) {
+        .Ace, .Jack, .Queen, .King, .All => true,
+        else => false,
+    };
+}
+
 /// Converts a card identity into a string equivalent.
 pub fn cardToString(c: card.Identity) ?[2]u8 {
     const r: ?u8 = switch (c.rank) {
@@ -44,8 +52,8 @@ pub fn cardToString(c: card.Identity) ?[2]u8 {
     }
 }
 
-/// Converts a string into a valid card identity, format used is a letter for the suit and a letter for the rank, suits are "S, H, C, D", and ranks are "A, K, Q, J, T, 9 to 2". An example of a valid
-/// card would be "9C" (Nine of clubs).
+/// Converts a string into a valid card identity, format used is a letter for the suit and a letter for the rank,
+/// suits are "S, H, C, D", and ranks are "A, K, Q, J, T, 9 to 2". An example of a valid card would be "9C" (Nine of clubs).
 pub fn parseCard(s: []const u8) ?card.Identity {
     if (s.len != 2) return null;
 
