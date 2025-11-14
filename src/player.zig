@@ -124,24 +124,11 @@ test "add card to discard deck" {
     defer player_one.deinit();
 
     const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
-    const card_three = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
-    const card_four = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
 
-    try player_one.addToDiscardDeck(card_one, 0);
-    try player_one.addToDiscardDeck(card_two, 1);
-    try player_one.addToDiscardDeck(card_three, 2);
-    try player_one.addToDiscardDeck(card_four, 3);
+    try player_one.addToDiscardDeck(card_one);
 
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[2].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
-
-    try std.testing.expectEqual(card_one, player_one.tableau.matrix.items[0].cards.items[0]);
-    try std.testing.expectEqual(card_two, player_one.tableau.matrix.items[1].cards.items[0]);
-    try std.testing.expectEqual(card_three, player_one.tableau.matrix.items[2].cards.items[0]);
-    try std.testing.expectEqual(card_four, player_one.tableau.matrix.items[3].cards.items[0]);
+    try std.testing.expectEqual(1, player_one.discard_deck.cards.items.len);
+    try std.testing.expectEqual(card_one, player_one.discard_deck.cards.items[0]);
 }
 
 test "remove from discard deck" {
