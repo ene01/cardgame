@@ -1,7 +1,6 @@
 //! The deck definition.
 const std = @import("std");
 const card = @import("card.zig");
-const logging = @import("log.zig");
 
 /// A dynamic deck of cards.
 pub const CardList = struct {
