@@ -1,73 +1,72 @@
 const std = @import("std");
-const card = @import("card.zig");
-const cardmatrix = @import("card_matrix.zig");
-const deck = @import("deck.zig");
+const Card = @import("card.zig");
+const Cardmatrix = @import("card_matrix.zig");
+const Deck = @import("deck.zig");
 
-/// Player attributes: hand, rows, and status.
-pub const Attributes = struct {
-    hand: deck.CardList,
-    /// A deck of cards intended to be discarded by the player.
-    discard_deck: deck.CardList,
-    tableau: cardmatrix.CardMatrix,
-    is_playing: bool,
+pub const Player = @This();
 
-    /// Initializes and returns a player's attributes with an empty hand.
-    pub fn init(gpa: std.mem.Allocator, hand_size: u16, discard_size: u16, columns: u16, column_deck_size: u16) !Attributes {
-        return Attributes{ .hand = try deck.CardList.init(gpa, hand_size), .discard_deck = try deck.CardList.init(gpa, discard_size), .tableau = try cardmatrix.CardMatrix.init(gpa, columns, column_deck_size), .is_playing = true };
-    }
+hand: Deck,
+/// A deck of cards intended to be discarded by the player.
+discard_deck: Deck,
+tableau: Cardmatrix,
+is_playing: bool,
 
-    /// Releases memory for dynamic arrays (hand).
-    pub fn deinit(self: *Attributes) void {
-        self.hand.deinit();
-        self.tableau.deinit();
-        self.discard_deck.deinit();
-    }
+/// Initializes and returns a player with an empty hand.
+pub fn init(gpa: std.mem.Allocator, hand_size: u16, discard_size: u16, columns: u16, column_deck_size: u16) !Player {
+    return Player{ .hand = try Deck.init(gpa, hand_size), .discard_deck = try Deck.init(gpa, discard_size), .tableau = try Cardmatrix.init(gpa, columns, column_deck_size), .is_playing = true };
+}
 
-    /// Adds a card to the player's hand.
-    pub fn addToHand(self: *Attributes, new_card: card.Identity) !void {
-        try self.hand.addCard(new_card);
-    }
+/// Releases memory for dynamic arrays (hand).
+pub fn deinit(self: *Player) void {
+    self.hand.deinit();
+    self.tableau.deinit();
+    self.discard_deck.deinit();
+}
 
-    /// Adds a card to the player's discard deck.
-    pub fn addToDiscardDeck(self: *Attributes, new_card: card.Identity) !void {
-        try self.discard_deck.addCard(new_card);
-    }
+/// Adds a card to the player's hand.
+pub fn addToHand(self: *Player, new_card: Card) !void {
+    try self.hand.addCard(new_card);
+}
 
-    /// Adds a card to the specified row.
-    pub fn addToColumn(self: *Attributes, new_card: card.Identity, column_index: usize) !void {
-        try self.tableau.addCard(@intCast(column_index), new_card);
-    }
+/// Adds a card to the player's discard deck.
+pub fn addToDiscardDeck(self: *Player, new_card: Card) !void {
+    try self.discard_deck.addCard(new_card);
+}
 
-    /// Removes a single instance of a card from the player's hand.
-    pub fn removeCardFromHand(self: *Attributes, card_to_remove: card.Identity) ?usize {
-        return self.hand.removeCardByID(card_to_remove);
-    }
+/// Adds a card to the specified row.
+pub fn addToColumn(self: *Player, new_card: Card, column_index: usize) !void {
+    try self.tableau.addCard(@intCast(column_index), new_card);
+}
 
-    /// Removes a single instance of a card from the player's discard deck.
-    pub fn removeCardFromDiscardDeck(self: *Attributes, card_to_remove: card.Identity) ?usize {
-        return self.discard_deck.removeCardByID(card_to_remove);
-    }
+/// Removes a single instance of a card from the player's hand.
+pub fn removeCardFromHand(self: *Player, card_to_remove: Card) ?usize {
+    return self.hand.removeCardByID(card_to_remove);
+}
 
-    /// Removes all instances of a card from the player's hand.
-    pub fn removeCardsFromHand(self: *Attributes, card_to_remove: card.Identity) void {
-        self.hand.removeMultipleCardsByID(card_to_remove);
-    }
+/// Removes a single instance of a card from the player's discard deck.
+pub fn removeCardFromDiscardDeck(self: *Player, card_to_remove: Card) ?usize {
+    return self.discard_deck.removeCardByID(card_to_remove);
+}
 
-    /// Removes all instances of a card from the player's discard deck.
-    pub fn removeCardsFromDiscardDeck(self: *Attributes, card_to_remove: card.Identity) void {
-        self.discard_deck.removeMultipleCardsByID(card_to_remove);
-    }
+/// Removes all instances of a card from the player's hand.
+pub fn removeCardsFromHand(self: *Player, card_to_remove: Card) void {
+    self.hand.removeMultipleCardsByID(card_to_remove);
+}
 
-    /// Removes the last card from the specified row.
-    pub fn removeCardFromColumn(self: *Attributes, column_index: usize) ?card.Identity {
-        return self.tableau.removeCard(column_index);
-    }
-};
+/// Removes all instances of a card from the player's discard deck.
+pub fn removeCardsFromDiscardDeck(self: *Player, card_to_remove: Card) void {
+    self.discard_deck.removeMultipleCardsByID(card_to_remove);
+}
+
+/// Removes the last card from the specified row.
+pub fn removeCardFromColumn(self: *Player, column_index: usize) ?Card {
+    return self.tableau.removeCard(column_index);
+}
 
 test "player initiation" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
     try std.testing.expectEqual(4, player_one.tableau.matrix.items.len);
@@ -79,10 +78,10 @@ test "player initiation" {
 test "add card to hand" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
 
     try player_one.addToHand(card_one);
 
@@ -93,13 +92,13 @@ test "add card to hand" {
 test "add card to column" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
-    const card_three = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
-    const card_four = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Heart };
+    const card_three = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
+    const card_four = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
 
     try player_one.addToColumn(card_one, 0);
     try player_one.addToColumn(card_two, 1);
@@ -120,10 +119,10 @@ test "add card to column" {
 test "add card to discard deck" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
 
     try player_one.addToDiscardDeck(card_one);
 
@@ -134,10 +133,10 @@ test "add card to discard deck" {
 test "remove from discard deck" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
 
     try player_one.discard_deck.cards.append(alloc, card_one);
 
@@ -152,10 +151,10 @@ test "remove from discard deck" {
 test "remove from hand" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
 
     try player_one.hand.cards.append(alloc, card_one);
 
@@ -170,11 +169,11 @@ test "remove from hand" {
 test "remove multiple from hand" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
 
     // four equal, one different.
     try player_one.hand.cards.append(alloc, card_one);
@@ -193,11 +192,11 @@ test "remove multiple from hand" {
 test "remove multiple from discard deck" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
 
     // four equal, one different.
     try player_one.discard_deck.cards.append(alloc, card_one);
@@ -216,13 +215,13 @@ test "remove multiple from discard deck" {
 test "remove card from column" {
     const alloc = std.testing.allocator;
 
-    var player_one = try Attributes.init(alloc, 5, 10, 4, 52);
+    var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
-    const card_three = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
-    const card_four = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Heart };
+    const card_three = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
+    const card_four = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
 
     try player_one.tableau.matrix.items[0].cards.append(alloc, card_one);
     try player_one.tableau.matrix.items[1].cards.append(alloc, card_two);

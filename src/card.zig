@@ -63,25 +63,25 @@ pub const Rank = enum(u8) {
     }
 };
 
-/// Card identity attributes, defines `Rank` and `Suit` for a card.
-pub const Identity = struct {
-    rank: Rank,
-    suit: Suit,
+/// Card attributes, defines `Rank` and `Suit` for a card.
+pub const Card = @This();
 
-    pub fn isCardEqual(card_one: Identity, card_two: Identity) bool {
-        return if (card_one.rank == card_two.rank and card_one.suit == card_two.suit) true else false;
-    }
+rank: Rank,
+suit: Suit,
 
-    /// Sets the card's rank.
-    pub fn changeRank(self: *Identity, newRank: Rank) void {
-        self.rank = newRank;
-    }
+pub fn isCardEqual(card_one: Card, card_two: Card) bool {
+    return if (card_one.rank == card_two.rank and card_one.suit == card_two.suit) true else false;
+}
 
-    /// Sets the card's suit.
-    pub fn changeSuit(self: *Identity, newSuit: Suit) void {
-        self.suit = newSuit;
-    }
-};
+/// Sets the card's rank.
+pub fn changeRank(self: *Card, newRank: Rank) void {
+    self.rank = newRank;
+}
+
+/// Sets the card's suit.
+pub fn changeSuit(self: *Card, newSuit: Suit) void {
+    self.suit = newSuit;
+}
 
 test "equal rank true" {
     const rank_one = Rank.Ace;
@@ -140,21 +140,21 @@ test "equal suit false" {
 }
 
 test "equal card true" {
-    const card_one = Identity{ .rank = Rank.Ace, .suit = Suit.Club };
-    const card_two = Identity{ .rank = Rank.Ace, .suit = Suit.Club };
+    const card_one = Card{ .rank = Rank.Ace, .suit = Suit.Club };
+    const card_two = Card{ .rank = Rank.Ace, .suit = Suit.Club };
 
-    try std.testing.expect(Identity.isCardEqual(card_one, card_two));
+    try std.testing.expect(Card.isCardEqual(card_one, card_two));
 }
 
 test "equal card false" {
-    const card_one = Identity{ .rank = Rank.Ace, .suit = Suit.Club };
-    const card_two = Identity{ .rank = Rank.Ace, .suit = Suit.Heart };
+    const card_one = Card{ .rank = Rank.Ace, .suit = Suit.Club };
+    const card_two = Card{ .rank = Rank.Ace, .suit = Suit.Heart };
 
-    try std.testing.expect(!Identity.isCardEqual(card_one, card_two));
+    try std.testing.expect(!Card.isCardEqual(card_one, card_two));
 }
 
 test "change rank" {
-    var card_one = Identity{ .rank = Rank.Ace, .suit = Suit.Club };
+    var card_one = Card{ .rank = Rank.Ace, .suit = Suit.Club };
 
     card_one.changeRank(Rank.Eight);
 
@@ -162,7 +162,7 @@ test "change rank" {
 }
 
 test "change suit" {
-    var card_one = Identity{ .rank = Rank.Ace, .suit = Suit.Club };
+    var card_one = Card{ .rank = Rank.Ace, .suit = Suit.Club };
 
     card_one.changeSuit(Suit.Spade);
 

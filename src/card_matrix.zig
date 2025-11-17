@@ -1,70 +1,70 @@
 //! Provides a struct for a card matrix.
-const card = @import("card.zig");
-const deck = @import("deck.zig");
+const Card = @import("card.zig");
+const Deck = @import("deck.zig");
 const std = @import("std");
 
-/// A matrix of cards arranged in rows and columns.
-pub const CardMatrix = struct {
-    /// An ArrayList of CardList, you can handle this manually for more control over the decks that form the matrix.
-    matrix: std.ArrayList(deck.CardList),
-    /// The allocator used by this struct.
-    allocator: std.mem.Allocator,
+pub const CardMatrix = @This();
 
-    /// Initializes and returns a matrix of cards.
-    pub fn init(gpa: std.mem.Allocator, columns: u16, rows: u16) !CardMatrix {
-        var new_matrix = CardMatrix{ .matrix = try std.ArrayList(deck.CardList).initCapacity(gpa, 20), .allocator = gpa };
-        var new_deck: deck.CardList = undefined;
+/// An ArrayList of CardList, you can handle this manually for more control over the decks that form the matrix.
+matrix: std.ArrayList(Deck),
 
-        // add a deck to each "column"
-        for (0..columns) |_| {
-            new_deck = try deck.CardList.init(gpa, rows);
-            try new_matrix.matrix.append(gpa, new_deck);
-        }
+/// The allocator used by this struct.
+allocator: std.mem.Allocator,
 
-        return new_matrix;
+/// Initializes and returns a matrix of cards.
+pub fn init(gpa: std.mem.Allocator, columns: u16, rows: u16) !CardMatrix {
+    var new_matrix = CardMatrix{ .matrix = try std.ArrayList(Deck).initCapacity(gpa, 20), .allocator = gpa };
+    var new_deck: Deck = undefined;
+
+    // add a deck to each "column"
+    for (0..columns) |_| {
+        new_deck = try Deck.init(gpa, rows);
+        try new_matrix.matrix.append(gpa, new_deck);
     }
 
-    /// Releases all memory.
-    pub fn deinit(self: *CardMatrix) void {
-        for (self.matrix.items) |*currentDeck| {
-            currentDeck.deinit();
-        }
+    return new_matrix;
+}
 
-        self.matrix.deinit(self.allocator);
+/// Releases all memory.
+pub fn deinit(self: *CardMatrix) void {
+    for (self.matrix.items) |*currentDeck| {
+        currentDeck.deinit();
     }
 
-    /// Returns the amount of cards in a specified column.
-    pub fn columnSize(self: *CardMatrix, column_index: usize) usize {
-        return self.matrix.items[column_index].cards.items.len;
-    }
+    self.matrix.deinit(self.allocator);
+}
 
-    /// Resets the entire matrix.
-    pub fn reset(self: *CardMatrix) void {
-        for (self.matrix.items) |*cardDeck| {
-            cardDeck.clear();
-        }
-    }
+/// Returns the amount of cards in a specified column.
+pub fn columnSize(self: *CardMatrix, column_index: usize) usize {
+    return self.matrix.items[column_index].cards.items.len;
+}
 
-    /// Adds a card to the specified row.
-    pub fn addCard(self: *CardMatrix, column_index: usize, newCard: card.Identity) !void {
-        try self.matrix.items[column_index].addCard(newCard);
+/// Resets the entire matrix.
+pub fn reset(self: *CardMatrix) void {
+    for (self.matrix.items) |*cardDeck| {
+        cardDeck.clear();
     }
+}
 
-    /// Removes the last card from the specified row.
-    pub fn removeCard(self: *CardMatrix, column_index: usize) ?card.Identity {
-        return self.matrix.items[column_index].removeCardByIndex(self.matrix.items[column_index].cards.items.len - 1);
-    }
+/// Adds a card to the specified row.
+pub fn addCard(self: *CardMatrix, column_index: usize, newCard: Card) !void {
+    try self.matrix.items[column_index].addCard(newCard);
+}
 
-    /// Returns the card at the given row and column.
-    pub fn lookUp(self: *CardMatrix, column_index: usize, rowIndex: usize) ?card.Identity {
-        return self.matrix.items[column_index].lookUpByIndex(rowIndex);
-    }
+/// Removes the last card from the specified row.
+pub fn removeCard(self: *CardMatrix, column_index: usize) ?Card {
+    return self.matrix.items[column_index].removeCardByIndex(self.matrix.items[column_index].cards.items.len - 1);
+}
 
-    /// Clears a column.
-    pub fn clearColumn(self: *CardMatrix, column_index: usize) void {
-        self.matrix.items[column_index].clear();
-    }
-};
+/// Returns the card at the given row and column.
+pub fn lookUp(self: *CardMatrix, column_index: usize, rowIndex: usize) ?Card {
+    return self.matrix.items[column_index].lookUpByIndex(rowIndex);
+}
+
+/// Clears a column.
+pub fn clearColumn(self: *CardMatrix, column_index: usize) void {
+    self.matrix.items[column_index].clear();
+}
 
 test "matrix init" {
     const alloc = std.testing.allocator;
@@ -81,7 +81,7 @@ test "column size" {
     var card_matrix = try CardMatrix.init(alloc, 2, 3);
     defer card_matrix.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
 
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);
@@ -101,7 +101,7 @@ test "reset size" {
     var card_matrix = try CardMatrix.init(alloc, 2, 3);
     defer card_matrix.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
 
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);
@@ -123,7 +123,7 @@ test "add card to row" {
     var card_matrix = try CardMatrix.init(alloc, 2, 24);
     defer card_matrix.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
 
     try card_matrix.addCard(0, card_one);
     try card_matrix.addCard(1, card_one);
@@ -138,10 +138,10 @@ test "look up deck" {
     var card_matrix = try CardMatrix.init(alloc, 2, 24);
     defer card_matrix.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
-    const card_two = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Diamond };
-    const card_three = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Spade };
-    const card_four = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Heart };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
+    const card_three = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_four = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Heart };
 
     try card_matrix.addCard(1, card_one);
     try card_matrix.addCard(1, card_two);
@@ -157,7 +157,7 @@ test "clear column" {
     var card_matrix = try CardMatrix.init(alloc, 2, 3);
     defer card_matrix.deinit();
 
-    const card_one = card.Identity{ .rank = card.Rank.Ace, .suit = card.Suit.Club };
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
 
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);
     try card_matrix.matrix.items[0].cards.append(alloc, card_one);

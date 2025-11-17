@@ -1,21 +1,21 @@
 const std = @import("std");
-const deck = @import("deck.zig");
-const card = @import("card.zig");
-pub const player = @import("player.zig").Attributes;
+const Deck = @import("deck.zig");
+pub const Player = @import("player.zig");
 
-pub const Gameplay = struct {
-    deck: deck.CardList,
-    player: player,
-    center_deck: deck.CardList,
+pub const Cardgame = @This();
 
-    /// Initiation of the game.
-    pub fn init(gpa: std.mem.Allocator, default_columns: usize) !Gameplay {
-        return Gameplay{ .deck = deck.CardList.init(gpa, 108), .player = try player.init(gpa, default_columns, 5, 10), .center_deck = deck.CardList.init(gpa, 15) };
-    }
+current_deck: Deck,
+current_player: Player,
+current_center_deck: Deck,
 
-    /// Deinit allocator data.
-    pub fn deinit(self: *Gameplay) void {
-        self.deck.deinit();
-        self.player.deinit();
-    }
-};
+/// Initiation of the game.
+pub fn init(gpa: std.mem.Allocator, default_columns: usize) !Cardgame {
+    return Cardgame{ .current_deck = Deck.init(gpa, 108), .current_player = try Player.init(gpa, default_columns, 5, 10), .current_center_deck = Deck.init(gpa, 15) };
+}
+
+/// Deinit allocator data.
+pub fn deinit(self: *Cardgame) void {
+    self.current_deck.deinit();
+    self.current_center_deck.deinit();
+    self.current_player.deinit();
+}
