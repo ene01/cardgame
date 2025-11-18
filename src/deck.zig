@@ -132,7 +132,8 @@ pub fn shuffle(self: *Deck, seed: ?u64) void {
         var rng = std.Random.DefaultPrng.init(valid_seed);
         rng.random().shuffle(Card, self.cards.items);
     } else {
-        var rng = std.Random.DefaultPrng.init(@intCast(std.time.nanoTimestamp()));
+        const selected_seed = std.time.nanoTimestamp();
+        var rng = std.Random.DefaultPrng.init(@intCast(selected_seed));
         rng.random().shuffle(Card, self.cards.items);
     }
 }
