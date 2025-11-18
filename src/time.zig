@@ -1,5 +1,5 @@
 const std = @import("std");
-const zeit = @import("zeit");
+pub const zeit = @import("zeit");
 
 pub fn getTime() !zeit.Time {
     var buffer: [256]u8 = undefined;
