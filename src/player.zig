@@ -1,82 +1,103 @@
+//! Player state containing hand, discard deck, and tableau.
+
 const std = @import("std");
 const Card = @import("card.zig");
-const Cardmatrix = @import("card_matrix.zig");
+const Cardmatrix = @import("cardmatrix.zig");
 const Deck = @import("deck.zig");
+const testing = std.testing;
+const debug = std.debug;
 
 pub const Player = @This();
 
 hand: Deck,
-/// A deck of cards intended to be discarded by the player.
+/// The deck the player must clear to win.
 discard_deck: Deck,
+/// Column-based layout similar to solitaire.
 tableau: Cardmatrix,
 is_playing: bool,
 
-/// Initializes and returns a player with an empty hand.
-pub fn init(gpa: std.mem.Allocator, hand_size: u16, discard_size: u16, columns: u16, column_deck_size: u16) !Player {
-    return Player{ .hand = try Deck.init(gpa, hand_size), .discard_deck = try Deck.init(gpa, discard_size), .tableau = try Cardmatrix.init(gpa, columns, column_deck_size), .is_playing = true };
+/// Creates a player with empty hand, discard deck, and tableau.
+pub fn init(
+    gpa: std.mem.Allocator,
+    hand_size: u16,
+    discard_size: u16,
+    columns: u16,
+    column_deck_size: u16,
+) !Player {
+    return Player{
+        .hand = try Deck.init(gpa, hand_size),
+        .discard_deck = try Deck.init(gpa, discard_size),
+        .tableau = try Cardmatrix.init(gpa, columns, column_deck_size),
+        .is_playing = true,
+    };
 }
 
-/// Releases memory for dynamic arrays (hand).
+/// Frees all dynamic storage.
 pub fn deinit(self: *Player) void {
     self.hand.deinit();
     self.tableau.deinit();
     self.discard_deck.deinit();
 }
 
-/// Adds a card to the player's hand.
+/// Adds a card to the hand.
 pub fn addToHand(self: *Player, new_card: Card) !void {
     try self.hand.addCard(new_card);
 }
 
-/// Adds a card to the player's discard deck.
+/// Adds a card to the discard deck.
 pub fn addToDiscardDeck(self: *Player, new_card: Card) !void {
     try self.discard_deck.addCard(new_card);
 }
 
-/// Adds a card to the specified row.
+/// Adds a card to a tableau column.
 pub fn addToColumn(self: *Player, new_card: Card, column_index: usize) !void {
     try self.tableau.addCard(@intCast(column_index), new_card);
 }
 
-/// Removes a single instance of a card from the player's hand.
-pub fn removeCardFromHand(self: *Player, card_to_remove: Card) ?usize {
-    return self.hand.removeCardByID(card_to_remove);
+/// Removes one matching card from the hand.
+pub fn removeCardFromHand(self: *Player, index: usize) Card {
+    return self.hand.removeCard(index);
 }
 
-/// Removes a single instance of a card from the player's discard deck.
-pub fn removeCardFromDiscardDeck(self: *Player, card_to_remove: Card) ?usize {
-    return self.discard_deck.removeCardByID(card_to_remove);
+/// Removes one matching card from the discard deck.
+pub fn removeCardFromDiscardDeck(self: *Player, index: usize) Card {
+    return self.discard_deck.removeCard(index);
 }
 
-/// Removes all instances of a card from the player's hand.
-pub fn removeCardsFromHand(self: *Player, card_to_remove: Card) void {
-    self.hand.removeMultipleCardsByID(card_to_remove);
+/// Removes all matching cards from the hand.
+pub fn removeMultCardsFromHand(self: *Player, card: Card) usize {
+    return self.hand.removeMultipleCardsByID(card);
 }
 
-/// Removes all instances of a card from the player's discard deck.
-pub fn removeCardsFromDiscardDeck(self: *Player, card_to_remove: Card) void {
-    self.discard_deck.removeMultipleCardsByID(card_to_remove);
+/// Removes all matching cards from the discard deck.
+pub fn removeMultCardsFromDiscardDeck(self: *Player, card: Card) usize {
+    return self.discard_deck.removeMultipleCardsByID(card);
 }
 
-/// Removes the last card from the specified row.
-pub fn removeCardFromColumn(self: *Player, column_index: usize) ?Card {
-    return self.tableau.removeCard(column_index);
+/// Removes the last card from a tableau column.
+pub fn removeCardFromColumn(self: *Player, column: usize, index: usize) Card {
+    return self.tableau.removeCard(column, index);
+}
+
+/// Removes the last card from a tableau column.
+pub fn removeMultCardsFromColumn(self: *Player, column: usize, card: Card) Card {
+    return self.tableau.removeCardsByID(column, card);
 }
 
 test "player initiation" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
 
-    try std.testing.expectEqual(4, player_one.tableau.matrix.items.len);
-    try std.testing.expectEqual(0, player_one.discard_deck.len());
-    try std.testing.expectEqual(0, player_one.hand.len());
-    try std.testing.expect(player_one.is_playing);
+    try testing.expectEqual(4, player_one.tableau.matrix.items.len);
+    try testing.expectEqual(0, player_one.discard_deck.len());
+    try testing.expectEqual(0, player_one.hand.len());
+    try testing.expect(player_one.is_playing);
 }
 
 test "add card to hand" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -85,12 +106,12 @@ test "add card to hand" {
 
     try player_one.addToHand(card_one);
 
-    try std.testing.expectEqual(1, player_one.hand.cards.items.len);
-    try std.testing.expectEqual(card_one, player_one.hand.cards.items[0]);
+    try testing.expectEqual(1, player_one.hand.cards.items.len);
+    try testing.expectEqual(card_one, player_one.hand.cards.items[0]);
 }
 
 test "add card to column" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -105,19 +126,19 @@ test "add card to column" {
     try player_one.addToColumn(card_three, 2);
     try player_one.addToColumn(card_four, 3);
 
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[2].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[2].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
 
-    try std.testing.expectEqual(card_one, player_one.tableau.matrix.items[0].cards.items[0]);
-    try std.testing.expectEqual(card_two, player_one.tableau.matrix.items[1].cards.items[0]);
-    try std.testing.expectEqual(card_three, player_one.tableau.matrix.items[2].cards.items[0]);
-    try std.testing.expectEqual(card_four, player_one.tableau.matrix.items[3].cards.items[0]);
+    try testing.expectEqual(card_one, player_one.tableau.matrix.items[0].cards.items[0]);
+    try testing.expectEqual(card_two, player_one.tableau.matrix.items[1].cards.items[0]);
+    try testing.expectEqual(card_three, player_one.tableau.matrix.items[2].cards.items[0]);
+    try testing.expectEqual(card_four, player_one.tableau.matrix.items[3].cards.items[0]);
 }
 
 test "add card to discard deck" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -126,12 +147,12 @@ test "add card to discard deck" {
 
     try player_one.addToDiscardDeck(card_one);
 
-    try std.testing.expectEqual(1, player_one.discard_deck.cards.items.len);
-    try std.testing.expectEqual(card_one, player_one.discard_deck.cards.items[0]);
+    try testing.expectEqual(1, player_one.discard_deck.cards.items.len);
+    try testing.expectEqual(card_one, player_one.discard_deck.cards.items[0]);
 }
 
 test "remove from discard deck" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -140,16 +161,16 @@ test "remove from discard deck" {
 
     try player_one.discard_deck.cards.append(alloc, card_one);
 
-    try std.testing.expectEqual(1, player_one.discard_deck.cards.items.len);
-    try std.testing.expectEqual(card_one, player_one.discard_deck.cards.items[0]);
+    try testing.expectEqual(1, player_one.discard_deck.cards.items.len);
+    try testing.expectEqual(card_one, player_one.discard_deck.cards.items[0]);
 
-    const removed_card = player_one.removeCardFromDiscardDeck(card_one);
+    const removed_card = player_one.removeCardFromDiscardDeck(0);
 
-    try std.testing.expectEqual(0, removed_card.?);
+    try testing.expectEqual(card_one, removed_card);
 }
 
 test "remove from hand" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -158,16 +179,15 @@ test "remove from hand" {
 
     try player_one.hand.cards.append(alloc, card_one);
 
-    try std.testing.expectEqual(1, player_one.hand.cards.items.len);
-    try std.testing.expectEqual(card_one, player_one.hand.cards.items[0]);
+    try testing.expectEqual(1, player_one.hand.len());
+    try testing.expectEqual(card_one, player_one.hand.lookupByIndex(0));
 
-    const removed_card = player_one.removeCardFromHand(card_one);
-
-    try std.testing.expectEqual(0, removed_card.?);
+    const removed_card = player_one.removeCardFromHand(0);
+    try testing.expectEqual(card_one, removed_card);
 }
 
 test "remove multiple from hand" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -182,15 +202,16 @@ test "remove multiple from hand" {
     try player_one.hand.cards.append(alloc, card_one);
     try player_one.hand.cards.append(alloc, card_two);
 
-    try std.testing.expectEqual(5, player_one.hand.cards.items.len);
+    try testing.expectEqual(5, player_one.hand.cards.items.len);
 
-    player_one.removeCardsFromHand(card_one);
+    const amount_removed = player_one.removeMultCardsFromHand(card_one);
 
-    try std.testing.expectEqual(1, player_one.hand.cards.items.len);
+    try testing.expectEqual(1, player_one.hand.cards.items.len);
+    try testing.expectEqual(4, amount_removed);
 }
 
 test "remove multiple from discard deck" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -205,15 +226,16 @@ test "remove multiple from discard deck" {
     try player_one.discard_deck.cards.append(alloc, card_one);
     try player_one.discard_deck.cards.append(alloc, card_two);
 
-    try std.testing.expectEqual(5, player_one.discard_deck.cards.items.len);
+    try testing.expectEqual(5, player_one.discard_deck.cards.items.len);
 
-    player_one.removeCardsFromDiscardDeck(card_one);
+    const amount_removed = player_one.removeMultCardsFromDiscardDeck(card_one);
 
-    try std.testing.expectEqual(1, player_one.discard_deck.cards.items.len);
+    try testing.expectEqual(1, player_one.discard_deck.cards.items.len);
+    try testing.expectEqual(4, amount_removed);
 }
 
 test "remove card from column" {
-    const alloc = std.testing.allocator;
+    const alloc = testing.allocator;
 
     var player_one = try Player.init(alloc, 5, 10, 4, 52);
     defer player_one.deinit();
@@ -228,22 +250,22 @@ test "remove card from column" {
     try player_one.tableau.matrix.items[2].cards.append(alloc, card_three);
     try player_one.tableau.matrix.items[3].cards.append(alloc, card_four);
 
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[2].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[2].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
 
-    try std.testing.expectEqual(card_one, player_one.tableau.matrix.items[0].cards.items[0]);
-    try std.testing.expectEqual(card_two, player_one.tableau.matrix.items[1].cards.items[0]);
-    try std.testing.expectEqual(card_three, player_one.tableau.matrix.items[2].cards.items[0]);
-    try std.testing.expectEqual(card_four, player_one.tableau.matrix.items[3].cards.items[0]);
+    try testing.expectEqual(card_one, player_one.tableau.matrix.items[0].cards.items[0]);
+    try testing.expectEqual(card_two, player_one.tableau.matrix.items[1].cards.items[0]);
+    try testing.expectEqual(card_three, player_one.tableau.matrix.items[2].cards.items[0]);
+    try testing.expectEqual(card_four, player_one.tableau.matrix.items[3].cards.items[0]);
 
-    const removed_Card = player_one.removeCardFromColumn(2);
+    const removed_card = player_one.removeCardFromColumn(2, 0);
 
-    try std.testing.expectEqual(card_three, removed_Card.?);
+    try testing.expectEqual(card_three, removed_card);
 
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
-    try std.testing.expectEqual(0, player_one.tableau.matrix.items[2].cards.items.len);
-    try std.testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[0].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[1].cards.items.len);
+    try testing.expectEqual(0, player_one.tableau.matrix.items[2].cards.items.len);
+    try testing.expectEqual(1, player_one.tableau.matrix.items[3].cards.items.len);
 }
