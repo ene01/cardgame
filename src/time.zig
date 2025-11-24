@@ -1,8 +1,9 @@
 const std = @import("std");
 pub const zeit = @import("zeit");
 
+/// Returns an easy to use struct to obtain current time.
 pub fn getTime() !zeit.Time {
-    var buffer: [256]u8 = undefined;
+    var buffer: [256]u8 = undefined; // this is the smallest it can take i think (?)
     var fba = std.heap.FixedBufferAllocator.init(buffer[0..]);
     const alloc = fba.allocator();
 
