@@ -10,7 +10,11 @@ center_deck: Deck,
 
 /// Initiation of the game.
 pub fn init(gpa: std.mem.Allocator, default_columns: usize) !Cardgame {
-    return Cardgame{ .deck = Deck.init(gpa, 108), .player = try Player.init(gpa, default_columns, 5, 10), .center_deck = Deck.init(gpa, 15) };
+    return Cardgame{
+        .deck = Deck.init(gpa, 108),
+        .player = try Player.init(gpa, default_columns, 5, 10),
+        .center_deck = Deck.init(gpa, 15),
+    };
 }
 
 /// Deinit allocator data.
