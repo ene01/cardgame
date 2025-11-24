@@ -4,18 +4,8 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // lib
-    const lib_mod = b.createModule(.{
-        .root_source_file = b.path("src/root.zig"),
-        .target = target,
-        .optimize = optimize,
-    });
-
-    const lib = b.addLibrary(.{
-        .name = "cardgame",
-        .linkage = .static,
-        .root_module = lib_mod,
-    });
+    // options
+    const file_test = b.option([]const u8, "test", "File to test") orelse "";
 
     // dependencies
     const zeit_dep = b.dependency("zeit", .{
@@ -24,38 +14,18 @@ pub fn build(b: *std.Build) void {
     });
 
     // tests
-    const full_test = b.addTest(.{
+    const tests = b.addTest(.{
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/root.zig"),
-            .target = target,
-            .optimize = optimize,
-        }),
-    });
-
-    const log_test = b.addTest(.{
-        .root_module = b.createModule(.{
-            .root_source_file = b.path("src/logger.zig"),
+            .root_source_file = b.path(file_test),
             .target = target,
             .optimize = optimize,
         }),
     });
 
     // imports
-    lib.root_module.addImport("zeit", zeit_dep.module("zeit"));
+    tests.root_module.addImport("zeit", zeit_dep.module("zeit"));
 
-    log_test.root_module.addImport("zeit", zeit_dep.module("zeit"));
-    log_test.root_module.addImport("cardgame", lib_mod);
-
-    full_test.root_module.addImport("zeit", zeit_dep.module("zeit"));
-    full_test.root_module.addImport("cardgame", lib_mod);
-
-    // run
-    const run_log_tests = b.addRunArtifact(log_test);
-    const run_full_tests = b.addRunArtifact(full_test);
-
-    b.step("log-test", "Run unit tests").dependOn(&run_log_tests.step);
-    b.step("full-test", "Run unit tests").dependOn(&run_full_tests.step);
-
-    // installs
-    b.installArtifact(lib);
+    // runs
+    const run_tests = b.addRunArtifact(tests);
+    b.step("test", "Run unit tests from a file").dependOn(&run_tests.step);
 }
