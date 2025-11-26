@@ -10,8 +10,7 @@ const log = @import("log.zig");
 /// Appends one or more standard 52-card decks. Jokers can be optionally included.
 pub fn appendStandardDeck(deck: *Deck, times: usize, jokers: bool) !void {
     for (0..times) |_| {
-        // Suits: Club → Diamond.
-        for ((@intFromEnum(Card.Suit.Club))..(@intFromEnum(Card.Suit.Diamond)) + 1) |suit_int| {
+        for ((@intFromEnum(Card.Suit.Spade))..(@intFromEnum(Card.Suit.Diamond)) + 1) |suit_int| {
             // Ranks: Ace → Two.
             for ((@intFromEnum(Card.Rank.Ace))..(@intFromEnum(Card.Rank.Two)) + 1) |rank_int| {
                 try deck.addCard(Card{
@@ -55,6 +54,17 @@ pub fn transferRandomCard(from_deck: *Deck, to_deck: *Deck) !void {
     const card = from_deck.lookupByIndex(index);
     try to_deck.addCard(card);
     _ = from_deck.removeCard(index);
+}
+
+/// Moves all cards from one deck to another.
+pub fn transferAllCards(from_deck: *Deck, to_deck: *Deck) !void {
+    debug.assert(from_deck.len() != 0);
+
+    for (from_deck.cards.items) |card| {
+        try to_deck.addCard(card);
+    }
+
+    from_deck.clear();
 }
 
 /// Returns a new deck containing all cards from both decks.
@@ -280,6 +290,23 @@ test "transfer random card" {
 
     try transferRandomCard(&test_deck_one, &test_deck_two);
     try testing.expectEqual(4, test_deck_two.len());
+}
+
+test "transfer all cards" {
+    const alloc = testing.allocator;
+
+    var test_deck_one = try Deck.init(alloc, 10);
+    var test_deck_two = try Deck.init(alloc, 10);
+    defer test_deck_one.deinit();
+    defer test_deck_two.deinit();
+
+    try test_deck_one.cards.append(test_deck_one.allocator, Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club });
+    try test_deck_one.cards.append(test_deck_one.allocator, Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade });
+    try test_deck_one.cards.append(test_deck_one.allocator, Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Heart });
+
+    try transferAllCards(&test_deck_one, &test_deck_two);
+    try testing.expectEqual(3, test_deck_two.len());
+    try testing.expectEqual(0, test_deck_one.len());
 }
 
 test "combine decks" {
