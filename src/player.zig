@@ -19,10 +19,10 @@ is_playing: bool,
 /// Creates a player with empty hand, discard deck, and tableau.
 pub fn init(
     gpa: std.mem.Allocator,
-    hand_size: u16,
-    discard_size: u16,
+    hand_size: usize,
+    discard_size: usize,
     columns: u16,
-    column_deck_size: u16,
+    column_deck_size: usize,
 ) !Player {
     return Player{
         .hand = try Deck.init(gpa, hand_size),
