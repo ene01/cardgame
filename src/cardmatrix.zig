@@ -14,9 +14,9 @@ matrix: std.ArrayList(Deck),
 allocator: std.mem.Allocator,
 
 /// Creates a matrix with `columns` decks, each sized for `rows` cards.
-pub fn init(gpa: std.mem.Allocator, columns: usize, rows: usize) !CardMatrix {
+pub fn init(gpa: std.mem.Allocator, columns: u16, rows: usize) !CardMatrix {
     var new_matrix = CardMatrix{
-        .matrix = try std.ArrayList(Deck).initCapacity(gpa, 20),
+        .matrix = try std.ArrayList(Deck).initCapacity(gpa, rows),
         .allocator = gpa,
     };
     var new_deck: Deck = undefined;
