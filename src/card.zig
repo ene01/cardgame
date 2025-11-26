@@ -4,7 +4,7 @@ const log = @import("log.zig");
 const testing = std.testing;
 
 /// Suits for cards.
-pub const Suit = enum(u8) {
+pub const Suit = enum(u4) {
     /// Placeholder for invalid cards.
     Invalid,
     All,
