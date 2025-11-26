@@ -14,7 +14,7 @@ matrix: std.ArrayList(Deck),
 allocator: std.mem.Allocator,
 
 /// Creates a matrix with `columns` decks, each sized for `rows` cards.
-pub fn init(gpa: std.mem.Allocator, columns: u16, rows: u16) !CardMatrix {
+pub fn init(gpa: std.mem.Allocator, columns: usize, rows: usize) !CardMatrix {
     var new_matrix = CardMatrix{
         .matrix = try std.ArrayList(Deck).initCapacity(gpa, 20),
         .allocator = gpa,
@@ -44,7 +44,7 @@ pub fn countColumns(self: *CardMatrix) usize {
 }
 
 /// Returns the pointer to a deck inside the matrix.
-pub fn getDeck(self: CardMatrix, column: usize) *Deck {
+pub fn getDeck(self: *CardMatrix, column: usize) *Deck {
     debug.assert(column < self.countColumns());
     return &self.matrix.items[column];
 }
@@ -103,6 +103,28 @@ test "matrix init" {
     defer card_matrix.deinit();
 
     try testing.expect(card_matrix.matrix.items.len == 4);
+}
+
+test "get deck" {
+    const alloc = testing.allocator;
+
+    var card_matrix = try CardMatrix.init(alloc, 2, 24);
+    defer card_matrix.deinit();
+
+    const card_one = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Club };
+    const card_two = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Diamond };
+    const card_three = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Spade };
+    const card_four = Card{ .rank = Card.Rank.Ace, .suit = Card.Suit.Heart };
+
+    try card_matrix.addCard(1, card_one);
+    try card_matrix.addCard(1, card_two);
+    try card_matrix.addCard(1, card_three);
+    try card_matrix.addCard(1, card_four);
+
+    var deck = card_matrix.getDeck(1);
+
+    const card_picked = deck.lookupByIndex(2);
+    try testing.expectEqual(card_three, card_picked);
 }
 
 test "column size" {
