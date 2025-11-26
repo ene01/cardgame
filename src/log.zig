@@ -20,7 +20,7 @@ fn writeSimple(filename: []const u8, comptime fmt: []const u8, args: anytype) vo
     };
 
     var buffer: [bytes]u8 = undefined;
-    const msg = safeFmtOrFallback(buffer[0..], "", fmt, args);
+    const msg = safeFmtOrFallback(&buffer, "", fmt, args);
 
     file.writeAll(msg) catch |e| {
         std.log.err("logger failed to write to '{s}': {s}", .{ filename, @errorName(e) });
@@ -46,13 +46,13 @@ fn writeLog(filename: []const u8, src: std.builtin.SourceLocation, logtype: []co
     var s_buf: [2]u8 = undefined;
     var ms_buf: [3]u8 = undefined;
 
-    const corrected_h = twoDigitPaddedInt(h_buf[0..], h_fallback[0..], current_time.hour);
-    const corrected_m = twoDigitPaddedInt(m_buf[0..], m_fallback[0..], current_time.minute);
-    const corrected_s = twoDigitPaddedInt(s_buf[0..], s_fallback[0..], current_time.second);
-    const corrected_ms = threeDigitPaddedInt(ms_buf[0..], ms_fallback[0..], current_time.millisecond);
+    const corrected_h = twoDigitPaddedInt(&h_buf, &h_fallback, current_time.hour);
+    const corrected_m = twoDigitPaddedInt(&m_buf, &m_fallback, current_time.minute);
+    const corrected_s = twoDigitPaddedInt(&s_buf, &s_fallback, current_time.second);
+    const corrected_ms = threeDigitPaddedInt(&ms_buf, &ms_fallback, current_time.millisecond);
 
     var fmt_buf: [bytes]u8 = undefined;
-    const inner_msg = safeFmtOrFallback(fmt_buf[0..], "", msg, args);
+    const inner_msg = safeFmtOrFallback(&fmt_buf, "", msg, args);
 
     // remove trailing ".zig"
     const mod_name = src.file[0 .. src.file.len - 4];
@@ -60,7 +60,7 @@ fn writeLog(filename: []const u8, src: std.builtin.SourceLocation, logtype: []co
 
     var msg_buf: [bytes]u8 = undefined;
     const full_msg = safeFmtOrFallback(
-        msg_buf[0..],
+        &msg_buf,
         "",
         "[{s}] [{s}:{s}:{s}.{s}] [{s}/{s}] {s}\n",
         .{ logtype, corrected_h, corrected_m, corrected_s, corrected_ms, mod_name, mod_func, inner_msg },
@@ -71,17 +71,17 @@ fn writeLog(filename: []const u8, src: std.builtin.SourceLocation, logtype: []co
 
 /// Logs an info-level message.
 pub fn info(src: std.builtin.SourceLocation, comptime fmt: []const u8, args: anytype) void {
-    writeLog(default_filename[0..], src, "INFO", fmt, args);
+    writeLog(&default_filename, src, "INFO", fmt, args);
 }
 
 /// Logs a warning.
 pub fn warn(src: std.builtin.SourceLocation, comptime fmt: []const u8, args: anytype) void {
-    writeLog(default_filename[0..], src, "WARN", fmt, args);
+    writeLog(&default_filename, src, "WARN", fmt, args);
 }
 
 /// Logs a critical message.
 pub fn crit(src: std.builtin.SourceLocation, comptime fmt: []const u8, args: anytype) void {
-    writeLog(default_filename[0..], src, "CRIT", fmt, args);
+    writeLog(&default_filename, src, "CRIT", fmt, args);
 }
 
 /// Formats into a buffer; falls back on error.
